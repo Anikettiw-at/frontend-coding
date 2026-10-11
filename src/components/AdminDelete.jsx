@@ -26,7 +26,7 @@ const AdminDelete = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this problem?')) return;
-    
+
     try {
       await axiosClient.delete(`/problem/delete/${id}`);
       setProblems(problems.filter(problem => problem._id !== id));
@@ -82,10 +82,10 @@ const AdminDelete = () => {
                 <td>{problem.title}</td>
                 <td>
                   <span className={`badge ${
-                    problem.difficulty === 'Easy' 
-                      ? 'badge-success' 
-                      : problem.difficulty === 'Medium' 
-                        ? 'badge-warning' 
+                    problem.difficulty?.toLowerCase() === 'easy'
+                      ? 'badge-success'
+                      : problem.difficulty?.toLowerCase() === 'medium'
+                        ? 'badge-warning'
                         : 'badge-error'
                   }`}>
                     {problem.difficulty}
@@ -98,7 +98,7 @@ const AdminDelete = () => {
                 </td>
                 <td>
                   <div className="flex space-x-2">
-                    <button 
+                    <button
                       onClick={() => handleDelete(problem._id)}
                       className="btn btn-sm btn-error"
                     >
@@ -115,7 +115,7 @@ const AdminDelete = () => {
   );
 
 
-  
+
 };
 
 export default AdminDelete;

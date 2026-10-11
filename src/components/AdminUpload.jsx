@@ -5,13 +5,13 @@ import axios from 'axios';
 import axiosClient from '../utils/axiosClient'
 
 function AdminUpload(){
-    
+
     const {problemId}  = useParams();
-    
+
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadedVideo, setUploadedVideo] = useState(null);
-    
+
       const {
         register,
         handleSubmit,
@@ -21,22 +21,22 @@ function AdminUpload(){
         setError,
         clearErrors
       } = useForm();
-    
+
       const selectedFile = watch('videoFile')?.[0];
-    
+
       // Upload video to Cloudinary
       const onSubmit = async (data) => {
         const file = data.videoFile[0];
-        
+
         setUploading(true);
         setUploadProgress(0);
         clearErrors();
-    
+
         try {
           // Step 1: Get upload signature from backend
           const signatureResponse = await axiosClient.get(`/video/create/${problemId}`);
-          const { signature, timestamp, public_id, api_key, cloud_name, upload_url } = signatureResponse.data;
-    
+          const { signature, timestamp, public_id, api_key, upload_url } = signatureResponse.data;
+
           // Step 2: Create FormData for Cloudinary upload
           const formData = new FormData();
           formData.append('file', file);
@@ -44,7 +44,7 @@ function AdminUpload(){
           formData.append('timestamp', timestamp);
           formData.append('public_id', public_id);
           formData.append('api_key', api_key);
-    
+
           // Step 3: Upload directly to Cloudinary
           const uploadResponse = await axios.post(upload_url, formData, {
             headers: {
@@ -55,9 +55,9 @@ function AdminUpload(){
               setUploadProgress(progress);
             },
           });
-    
+
           const cloudinaryResult = uploadResponse.data;
-    
+
           // Step 4: Save video metadata to backend
           const metadataResponse = await axiosClient.post('/video/save', {
             problemId:problemId,
@@ -65,22 +65,22 @@ function AdminUpload(){
             secureUrl: cloudinaryResult.secure_url,
             duration: cloudinaryResult.duration,
           });
-    
+
           setUploadedVideo(metadataResponse.data.videoSolution);
           reset(); // Reset form after successful upload
-          
+
         } catch (err) {
           console.error('Upload error:', err);
           setError('root', {
             type: 'manual',
-            message: err.response?.data?.message || 'Upload failed. Please try again.'
+            message: err.response?.data?.error || err.response?.data?.message || 'Upload failed. Please try again.'
           });
         } finally {
           setUploading(false);
           setUploadProgress(0);
         }
       };
-    
+
       // Format file size
       const formatFileSize = (bytes) => {
         if (bytes === 0) return '0 Bytes';
@@ -89,20 +89,20 @@ function AdminUpload(){
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
       };
-    
+
       // Format duration
       const formatDuration = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
       };
-    
+
       return (
         <div className="max-w-md mx-auto p-6">
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Upload Video</h2>
-              
+
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 {/* File Input */}
                 <div className="form-control w-full">
@@ -128,7 +128,7 @@ function AdminUpload(){
                         }
                       }
                     })}
-                    className={`file-input file-input-bordered w-full ${errors.videoFile ? 'file-input-error' : ''}`}
+                    className={`file-input w-full ${errors.videoFile ? 'file-input-error' : ''}`}
                     disabled={uploading}
                   />
                   {errors.videoFile && (
@@ -137,7 +137,7 @@ function AdminUpload(){
                     </label>
                   )}
                 </div>
-    
+
                 {/* Selected File Info */}
                 {selectedFile && (
                   <div className="alert alert-info">
@@ -148,7 +148,7 @@ function AdminUpload(){
                     </div>
                   </div>
                 )}
-    
+
                 {/* Upload Progress */}
                 {uploading && (
                   <div className="space-y-2">
@@ -156,21 +156,21 @@ function AdminUpload(){
                       <span>Uploading...</span>
                       <span>{uploadProgress}%</span>
                     </div>
-                    <progress 
-                      className="progress progress-primary w-full" 
-                      value={uploadProgress} 
+                    <progress
+                      className="progress progress-primary w-full"
+                      value={uploadProgress}
                       max="100"
                     ></progress>
                   </div>
                 )}
-    
+
                 {/* Error Message */}
                 {errors.root && (
                   <div className="alert alert-error">
                     <span>{errors.root.message}</span>
                   </div>
                 )}
-    
+
                 {/* Success Message */}
                 {uploadedVideo && (
                   <div className="alert alert-success">
@@ -181,7 +181,7 @@ function AdminUpload(){
                     </div>
                   </div>
                 )}
-    
+
                 {/* Upload Button */}
                 <div className="card-actions justify-end">
                   <button
@@ -193,7 +193,7 @@ function AdminUpload(){
                   </button>
                 </div>
               </form>
-            
+
             </div>
           </div>
         </div>

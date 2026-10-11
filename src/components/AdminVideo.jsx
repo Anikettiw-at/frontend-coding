@@ -6,6 +6,7 @@ const AdminVideo = () => {
   const [problems, setProblems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
 
 
   useEffect(() => {
@@ -26,14 +27,15 @@ const AdminVideo = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this problem?')) return;
-    
+    if (!window.confirm('Are you sure you want to delete the video for this problem?')) return;
+
     try {
       await axiosClient.delete(`/video/delete/${id}`);
-      setProblems(problems.filter(problem => problem._id !== id));
+      // Sirf video delete hua hai, problem list me rehni chahiye
+      setNotice('Video deleted successfully');
     } catch (err) {
-      setError(err);
-      console.log(err);
+      setNotice(err.response?.data?.error || 'Failed to delete video');
+      console.error(err);
     }
   };
 
@@ -53,7 +55,7 @@ const AdminVideo = () => {
           <svg xmlns="http://www.w3.org/2000/svg" className="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <span>{error.response.data.error}</span>
+          <span>{error}</span>
         </div>
       </div>
     );
@@ -65,6 +67,13 @@ const AdminVideo = () => {
         <h1 className="text-3xl font-bold">Video Upload and Delete</h1>
       </div>
 
+      {notice && (
+        <div className="alert alert-info mb-4">
+          <span>{notice}</span>
+          <button className="btn btn-sm btn-ghost" onClick={() => setNotice(null)}>✕</button>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="table table-zebra w-full">
           <thead>
@@ -73,7 +82,8 @@ const AdminVideo = () => {
               <th className="w-4/12">Title</th>
               <th className="w-2/12">Difficulty</th>
               <th className="w-3/12">Tags</th>
-              <th className="w-2/12">Actions</th>
+              <th className="w-1/12">Upload</th>
+              <th className="w-1/12">Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -83,10 +93,10 @@ const AdminVideo = () => {
                 <td>{problem.title}</td>
                 <td>
                   <span className={`badge ${
-                    problem.difficulty === 'Easy' 
-                      ? 'badge-success' 
-                      : problem.difficulty === 'Medium' 
-                        ? 'badge-warning' 
+                    problem.difficulty?.toLowerCase() === 'easy'
+                      ? 'badge-success'
+                      : problem.difficulty?.toLowerCase() === 'medium'
+                        ? 'badge-warning'
                         : 'badge-error'
                   }`}>
                     {problem.difficulty}
@@ -99,7 +109,7 @@ const AdminVideo = () => {
                 </td>
                 <td>
                   <div className="flex space-x-1">
-                     <NavLink 
+                     <NavLink
                         to={`/admin/upload/${problem._id}`}
                         className={`btn bg-blue-600`}
                         >
@@ -109,7 +119,7 @@ const AdminVideo = () => {
                 </td>
                 <td>
                   <div className="flex space-x-2">
-                    <button 
+                    <button
                       onClick={() => handleDelete(problem._id)}
                       className="btn btn-sm btn-error"
                     >
